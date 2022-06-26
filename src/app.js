@@ -1,31 +1,30 @@
 import express from "express";
 import dotenv from "dotenv";
 import { MongoClient, ObjectId } from "mongodb";
-import Joi from "joi";
 import cors from "cors";
 import dayjs from "dayjs";
+import {messageSchema, participantSchema} from "./validationSchema.js";
 
 
 
-
-// const now = dayjs().format("HH:MM:ss");
-
-// console.log(now);
 
 
 dotenv.config();
 const mongoClient = new MongoClient(process.env.MONGO_URI);
-const participantSchema = Joi.string().min(1);
+
 
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+
+// ================== Rota participantes ==================================
+
 app.post("/participantes", async (req,res)=>{
 
     const {name} = req.body;
-    const validation = participantSchema.validate(name);
+    const validation = await participantSchema(name);
     
     if(validation.error){
         return res.status(422).send(validation.error.details);
@@ -70,7 +69,33 @@ app.get("/participantes", async (req, res)=>{
         res.status(200).send(participantes);
     } catch (error) {
         res.sendStatus(500);
-    }
-} )
+    };
+});
+
+// ================== Rota messages ==================================
+
+
+app.post("/messages", async (req, res)=>{
+    const body = req.body;
+    const from = req.headers.user;
+    
+    const message ={from, ...body};
+    
+    const validation = await messageSchema(message);
+    
+    if(validation.error){
+        return res.status(422).send(validation.error.details);
+    }else{
+        try {
+            await mongoClient.connect();
+            const dbBatepapo_uol = mongoClient.db("Batepapo_uol");
+            await dbBatepapo_uol.collection("messages").insertOne({...message, time: dayjs().format("HH:mm:ss")})
+            res.sendStatus(201);
+        } catch (error) {
+            res.sendStatus(500);
+        }
+    };
+    
+})
 app.listen(process.env.PORT,()=>{console.log(`Servidor rodando `)})
 
