@@ -35,7 +35,7 @@ app.post("/participantes", async (req,res)=>{
         const dbBatepapo_uol = mongoClient.db("Batepapo_uol");
         
         const usernameAlreadyInUse = await dbBatepapo_uol.collection("participantes").findOne({name: name});
-        console.log(usernameAlreadyInUse);
+    
         if(usernameAlreadyInUse){
             res.status(409).send("Esse nome já esta sendo utilizado.");
             mongoClient.close();
@@ -61,5 +61,16 @@ app.post("/participantes", async (req,res)=>{
     };
 });
 
+app.get("/participantes", async (req, res)=>{
+    
+    try {
+        await mongoClient.connect();
+        const dbBatepapo_uol = mongoClient.db("Batepapo_uol");
+        const participantes = await dbBatepapo_uol.collection("participantes").find({}).toArray();
+        res.status(200).send(participantes);
+    } catch (error) {
+        res.sendStatus(500);
+    }
+} )
 app.listen(process.env.PORT,()=>{console.log(`Servidor rodando `)})
 
