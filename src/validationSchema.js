@@ -27,7 +27,7 @@ async function messageSchema(message){
     }
     
     const participantesNames =  participantes.map(participante => participante.name);
-    console.log(participantesNames);
+    
     const schema = Joi.object({
         from: Joi.string().valid(...participantesNames).required(),
         to: Joi.string().required(),

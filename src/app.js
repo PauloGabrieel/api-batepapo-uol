@@ -7,7 +7,7 @@ import {messageSchema, participantSchema} from "./validationSchema.js";
 
 
 
-
+const updateParticipants = 1000 * 15; 
 
 dotenv.config();
 const mongoClient = new MongoClient(process.env.MONGO_URI);
@@ -149,9 +149,27 @@ try {
     
 } catch (error) {
     res.sendStatus(500);
-}
+};
+
+});
+
+setInterval( async () => {
+    const timeNow = Date.now();
+    const tenSecond = 1000 * 10;
+    const tenSecondLater = timeNow - tenSecond;
+
+    await mongoClient.connect();
+    const dbBatepapo_uol = mongoClient.db("Batepapo_uol");
+    const inactiveParticipants = await dbBatepapo_uol.collection("participantes").find({lastStatus:{$lt: tenSecondLater}}).toArray();
+    inactiveParticipants.map(participante => dbBatepapo_uol.collection("messages").insertOne({
+        from: participante.name,
+        to: "Todos",
+        text: "sai da sala...",
+        type: "status",
+        time: dayjs().format("HH:mm:ss")
+    }));
+    dbBatepapo_uol.collection("participantes").deleteMany({lastStatus:{$lt: tenSecondLater}});
+}, updateParticipants);  
     
-    
-})
 app.listen(process.env.PORT,()=>{console.log(`Servidor rodando `)})
 
