@@ -106,9 +106,11 @@ app.get("/messages", async (req, res)=> {
         const dbBatepapo_uol = mongoClient.db("Batepapo_uol");
         if(limit){
             const messages = await dbBatepapo_uol.collection("messages")
-            .find({$or:[{to:"Todos"} ,{from: user}, {to: user}]})
-            .limit(parseInt(limit)).toArray();
+            .find({$or:[{to:"Todos"} ,{from: user}, {to: user}]}).toArray();
             mongoClient.close();
+            console.log(messages)
+            const messageInvertida = messages.slice(-parseInt(limit));
+            console.log(messageInvertida)
             return res.status(200).send(messages);
         }else{
             const messages = await dbBatepapo_uol.collection("messages")
