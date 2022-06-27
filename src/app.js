@@ -121,6 +121,37 @@ app.get("/messages", async (req, res)=> {
         res.sendStatus(500);
         console.log(error)
     };
+});
+
+// ================== Rota Status ==================================
+
+
+app.post("/status", async (req, res)=>{
+    const {user} = req.headers;
+    
+    
+try {
+    await mongoClient.connect();
+    const dbBatepapo_uol = mongoClient.db("Batepapo_uol");
+    const participante = await dbBatepapo_uol.collection("participantes").find({name: user}).toArray();
+    console.log(participante.length);
+    if(participante.length == 0){
+        res.sendStatus(404);
+    }else{
+        await dbBatepapo_uol.collection("participantes").updateOne({
+            name: user
+        },
+        {
+            $set: {lastStatus: Date.now()}
+        })
+        res.send(participante);
+    }
+    
+} catch (error) {
+    res.sendStatus(500);
+}
+    
+    
 })
 app.listen(process.env.PORT,()=>{console.log(`Servidor rodando `)})
 
