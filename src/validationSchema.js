@@ -3,12 +3,14 @@ import dotenv from "dotenv";
 import {MongoClient} from "mongodb";
 
 
+
 dotenv.config();
 const mongoClient = new MongoClient(process.env.MONGO_URI);
 
 async function participantSchema(name){
-    const schema = Joi.string().min(1).required();
+    const schema = Joi.string().required().trim();
     const validation = schema.validate(name); 
+    console.log(validation)
     return validation;
 }
 
@@ -24,10 +26,10 @@ async function messageSchema(message){
         console.log(error);
     }
     
-    message.from =  participantes.some(participante => participante.name === message.from);
-    
+    const participantesNames =  participantes.map(participante => participante.name);
+    console.log(participantesNames);
     const schema = Joi.object({
-        from: Joi.boolean().valid(true).required(),
+        from: Joi.string().valid(...participantesNames).required(),
         to: Joi.string().required(),
         text: Joi.string().required(),
         type: Joi.string().valid("message", "private_message").required()

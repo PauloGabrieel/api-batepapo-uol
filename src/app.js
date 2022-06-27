@@ -22,7 +22,6 @@ app.use(express.json());
 // ================== Rota participantes ==================================
 
 app.post("/participantes", async (req,res)=>{
-
     const {name} = req.body;
     const validation = await participantSchema(name);
     
@@ -33,14 +32,14 @@ app.post("/participantes", async (req,res)=>{
         await mongoClient.connect();
         const dbBatepapo_uol = mongoClient.db("Batepapo_uol");
         
-        const usernameAlreadyInUse = await dbBatepapo_uol.collection("participantes").findOne({name: name});
+        const usernameAlreadyInUse = await dbBatepapo_uol.collection("participantes").findOne({name});
     
         if(usernameAlreadyInUse){
             res.status(409).send("Esse nome já esta sendo utilizado.");
             mongoClient.close();
         }else{
             await dbBatepapo_uol.collection("participantes").insertOne({
-                name, 
+                name: name.trim(), 
                 lastStatus: Date.now()});
             
             await dbBatepapo_uol.collection("messages").insertOne({
@@ -93,9 +92,35 @@ app.post("/messages", async (req, res)=>{
             res.sendStatus(201);
         } catch (error) {
             res.sendStatus(500);
-        }
+        };
     };
     
+});
+
+app.get("/messages", async (req, res)=> {
+    const {limit} = req.query;
+    const {user} = req.headers;
+    
+    try {
+        await mongoClient.connect();
+        const dbBatepapo_uol = mongoClient.db("Batepapo_uol");
+        if(limit){
+            const messages = await dbBatepapo_uol.collection("messages")
+            .find({$or:[{to:"Todos"} ,{from: user}, {to: user}]})
+            .limit(parseInt(limit)).toArray();
+            mongoClient.close();
+            return res.status(200).send(messages);
+        }else{
+            const messages = await dbBatepapo_uol.collection("messages")
+            .find({$or:[{to:"Todos"} ,{from: user}, {to: user}]}).toArray();
+            mongoClient.close();
+            return res.status(200).send(messages)
+        }
+        
+    } catch (error) {
+        res.sendStatus(500);
+        console.log(error)
+    };
 })
 app.listen(process.env.PORT,()=>{console.log(`Servidor rodando `)})
 
